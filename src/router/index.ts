@@ -86,6 +86,12 @@ const router = createRouter({
       meta: { title: 'Videos', requiresAuth: true },
     },
     {
+      path: '/categories/new',
+      name: 'Create Category',
+      component: () => import('../views/Categories/NewCategory.vue'),
+      meta: { title: 'Create Category', requiresAuth: true },
+    },
+    {
       path: '/blank',
       name: 'Blank',
       component: () => import('../views/Pages/BlankPage.vue'),
