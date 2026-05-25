@@ -43,7 +43,7 @@ onMounted(async () => {
   try {
     await completeGoogleCallback(loginCode)
     statusMessage.value = 'Authentication successful. Redirecting...'
-    await router.replace('/')
+    await router.replace('/admin/dashboard')
   } catch (error) {
     const err = error as Error & { payload?: { message?: string } }
     errorMessage.value = err?.payload?.message || err.message || 'Google login failed.'

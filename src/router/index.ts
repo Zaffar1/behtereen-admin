@@ -10,8 +10,13 @@ const router = createRouter({
     {
       path: '/',
       name: 'Ecommerce',
-      component: () => import('../views/Ecommerce.vue'),
-      meta: { title: 'eCommerce Dashboard', requiresAuth: true },
+      redirect: '/admin/dashboard',
+    },
+    {
+      path: '/admin/dashboard',
+      name: 'Dashboard',
+      component: () => import('../views/Dashboard.vue'),
+      meta: { title: 'Dashboard', requiresAuth: true },
     },
     {
       path: '/calendar',
@@ -104,6 +109,12 @@ const router = createRouter({
       meta: { title: 'Edit Category', requiresAuth: true },
     },
     {
+      path: '/settings/invite-members',
+      name: 'Invite Members',
+      component: () => import('../views/Settings/InviteMembers.vue'),
+      meta: { title: 'Invite Members', requiresAuth: true },
+    },
+    {
       path: '/blank',
       name: 'Blank',
       component: () => import('../views/Pages/BlankPage.vue'),
@@ -114,6 +125,12 @@ const router = createRouter({
       name: '404 Error',
       component: () => import('../views/Errors/FourZeroFour.vue'),
       meta: { title: '404 Error' },
+    },
+    {
+      path: '/admin/login',
+      name: 'AdminLogin',
+      component: () => import('../views/Auth/Signin.vue'),
+      meta: { title: 'Signin', guestOnly: true },
     },
     {
       path: '/signin',
@@ -138,11 +155,11 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresAuth && !authState.token) {
-    return { path: '/signin', query: { redirect: to.fullPath } }
+    return { path: '/admin/login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.guestOnly && authState.token) {
-    return { path: '/' }
+    return { path: '/admin/dashboard' }
   }
 
   return true

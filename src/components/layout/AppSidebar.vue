@@ -19,31 +19,22 @@
         !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
       ]"
     >
-      <router-link to="/">
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="dark:hidden"
-          src="/images/logo/logo.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="hidden dark:block"
-          src="/images/logo/logo-dark.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-else
-          src="/images/logo/logo-icon.svg"
-          alt="Logo"
-          width="32"
-          height="32"
-        />
-      </router-link>
+    <router-link to="/" class="flex items-center gap-2">
+      <img
+        src="/images/logo/behtereen-logo.png"
+        alt="Behtereen Logo"
+        width="32"
+        height="32"
+        class="shrink-0"
+      />
+
+      <span
+        v-if="isExpanded || isHovered || isMobileOpen"
+        class="text-xlg font-semibold text-gray-900 dark:text-white whitespace-nowrap"
+      >
+        BEHTEREEN.PK
+      </span>
+    </router-link>
     </div>
 
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
@@ -86,17 +77,56 @@
           </li>
         </ul>
       </nav>
+
+      <nav class="mb-6">
+        <h2
+          :class="[
+            'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
+            !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
+          ]"
+        >
+          <template v-if="isExpanded || isHovered || isMobileOpen">Settings</template>
+          <HorizontalDots v-else />
+        </h2>
+
+        <ul class="flex flex-col gap-4">
+          <li>
+            <router-link
+              to="/settings/invite-members"
+              :class="[
+                'menu-item group',
+                {
+                  'menu-item-active': route.path.startsWith('/settings/invite-members'),
+                  'menu-item-inactive': !route.path.startsWith('/settings/invite-members'),
+                },
+              ]"
+            >
+              <span
+                :class="[
+                  route.path.startsWith('/settings/invite-members')
+                    ? 'menu-item-icon-active'
+                    : 'menu-item-icon-inactive',
+                ]"
+              >
+                <SettingsIcon />
+              </span>
+              <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text"
+                >Invite Members</span
+              >
+            </router-link>
+          </li>
+        </ul>
+      </nav>
     </div>
   </aside>
 </template>
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { HorizontalDots, ListIcon } from '../../icons'
+import { HorizontalDots, ListIcon, SettingsIcon } from '../../icons'
 import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
 
-const isActive = (path) => route.path === path
 </script>

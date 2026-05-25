@@ -25,8 +25,8 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}): Promi
 
   if (response.status === 401 && !options.skipAuthRedirect) {
     clearAuth()
-    if (window.location.pathname !== '/signin') {
-      window.location.href = '/signin'
+    if (window.location.pathname !== '/admin/login') {
+      window.location.href = '/admin/login'
     }
   }
 
