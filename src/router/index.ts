@@ -86,10 +86,22 @@ const router = createRouter({
       meta: { title: 'Videos', requiresAuth: true },
     },
     {
+      path: '/categories',
+      name: 'Categories',
+      component: () => import('../views/Categories/CategoriesList.vue'),
+      meta: { title: 'Categories', requiresAuth: true },
+    },
+    {
       path: '/categories/new',
       name: 'Create Category',
       component: () => import('../views/Categories/NewCategory.vue'),
       meta: { title: 'Create Category', requiresAuth: true },
+    },
+    {
+      path: '/categories/:id/edit',
+      name: 'Edit Category',
+      component: () => import('../views/Categories/EditCategory.vue'),
+      meta: { title: 'Edit Category', requiresAuth: true },
     },
     {
       path: '/blank',

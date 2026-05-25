@@ -61,18 +61,18 @@
         <ul class="flex flex-col gap-4">
           <li>
             <router-link
-              to="/categories/new"
+              to="/categories"
               :class="[
                 'menu-item group',
                 {
-                  'menu-item-active': isActive('/categories/new'),
-                  'menu-item-inactive': !isActive('/categories/new'),
+                  'menu-item-active': route.path.startsWith('/categories'),
+                  'menu-item-inactive': !route.path.startsWith('/categories'),
                 },
               ]"
             >
               <span
                 :class="[
-                  isActive('/categories/new')
+                  route.path.startsWith('/categories')
                     ? 'menu-item-icon-active'
                     : 'menu-item-icon-inactive',
                 ]"
