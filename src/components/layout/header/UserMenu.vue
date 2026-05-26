@@ -61,8 +61,8 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const router = useRouter()
 
 const menuItems = [
-  { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },
-  { href: '/profile', icon: SettingsIcon, text: 'Account settings' },
+  // { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },
+  // { href: '/profile', icon: SettingsIcon, text: 'Account settings' },
   { href: '/profile', icon: InfoCircleIcon, text: 'Support' },
 ]
 

@@ -19,6 +19,7 @@
         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
         <input
           v-model="node.name"
+          :data-error-key="dot(pathPrefix, 'name')"
           type="text"
           class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
           placeholder="e.g. vehicles"
@@ -27,13 +28,15 @@
       </div>
 
       <div v-if="isRoot">
-        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Image URL</label>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Image</label>
         <input
-          v-model="node.image"
-          type="text"
-          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
-          placeholder="https://..."
+          :data-error-key="dot(pathPrefix, 'image')"
+          type="file"
+          accept="image/*"
+          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+          @change="onRootImageChange"
         />
+        <p v-if="rootImageLabel()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selected: {{ rootImageLabel() }}</p>
         <p v-if="errorFor('image')" class="mt-1.5 text-xs text-error-500">{{ errorFor('image') }}</p>
       </div>
     </div>
@@ -73,7 +76,7 @@
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Label</label>
-            <input v-model="field.label" type="text" class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700" />
+            <input v-model="field.label" :data-error-key="dot(pathPrefix, `fields.${fieldIndex}.label`)" type="text" class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700" />
             <p v-if="fieldError(fieldIndex, 'label')" class="mt-1 text-xs text-error-500">{{ fieldError(fieldIndex, 'label') }}</p>
           </div>
 
@@ -81,6 +84,7 @@
             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Input Type</label>
             <select
               v-model="field.input_type"
+              :data-error-key="dot(pathPrefix, `fields.${fieldIndex}.input_type`)"
               class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700"
               :disabled="inputTypesLoading"
               @change="onInputTypeChange(field)"
@@ -130,7 +134,7 @@
               placeholder="Search option groups"
               class="h-9 w-full rounded-md border border-gray-300 px-2 text-sm dark:border-gray-700"
             />
-            <select v-model="field.option_group_id" class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700">
+            <select v-model="field.option_group_id" :data-error-key="dot(pathPrefix, `fields.${fieldIndex}.option_group_id`)" class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700">
               <option value="">Select option group</option>
               <option v-for="group in filteredOptionGroups(field.option_group_search)" :key="group.id" :value="String(group.id)">
                 {{ group.name }}
@@ -151,6 +155,7 @@
           <div v-else class="space-y-2">
             <input
               v-model="field.new_option_group.name"
+              :data-error-key="dot(pathPrefix, `fields.${fieldIndex}.option_group.name`)"
               type="text"
               placeholder="New option group name"
               class="h-10 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700"
@@ -171,7 +176,7 @@
             <div v-if="field.new_option_group.options.length === 0" class="text-xs text-gray-500">No options yet.</div>
 
             <div v-for="(option, optionIndex) in field.new_option_group.options" :key="`new-option-${optionIndex}`" class="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto] md:items-center">
-              <input v-model="option.value" type="text" placeholder="Value" class="h-9 rounded-md border border-gray-300 px-2 text-sm dark:border-gray-700" />
+              <input v-model="option.value" :data-error-key="dot(pathPrefix, `fields.${fieldIndex}.option_group.options.${optionIndex}.value`)" type="text" placeholder="Value" class="h-9 rounded-md border border-gray-300 px-2 text-sm dark:border-gray-700" />
               <span class="truncate text-xs text-gray-600 dark:text-gray-300">{{ generateLabelFromValue(option.value) || '-' }}</span>
               <button type="button" class="h-9 rounded-md border border-error-300 px-2 text-xs text-error-500" @click="removeOption(fieldIndex, optionIndex)">
                 Remove
@@ -248,7 +253,7 @@ interface CategoryField {
 
 interface CategoryNode {
   name: string
-  image?: string
+  image?: string | File | null
   fields: CategoryField[]
   children: CategoryNode[]
 }
@@ -345,6 +350,19 @@ const selectedGroup = (id: string) => {
   }
 
   return props.optionGroups.find((group) => String(group.id) === String(id)) || null
+}
+
+const rootImageLabel = () => {
+  if (!props.isRoot || !props.node.image) {
+    return ''
+  }
+
+  return props.node.image instanceof File ? props.node.image.name : String(props.node.image)
+}
+
+const onRootImageChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  props.node.image = target.files?.[0] || null
 }
 
 const resetOptionGroupData = (field: CategoryField) => {

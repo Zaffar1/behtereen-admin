@@ -52,6 +52,31 @@
         <ul class="flex flex-col gap-4">
           <li>
             <router-link
+              to="/admin/ads"
+              :class="[
+                'menu-item group',
+                {
+                  'menu-item-active': route.path.startsWith('/admin/ads'),
+                  'menu-item-inactive': !route.path.startsWith('/admin/ads'),
+                },
+              ]"
+            >
+              <span
+                :class="[
+                  route.path.startsWith('/admin/ads')
+                    ? 'menu-item-icon-active'
+                    : 'menu-item-icon-inactive',
+                ]"
+              >
+                <BoxIcon />
+              </span>
+              <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text"
+                >Ads</span
+              >
+            </router-link>
+          </li>
+          <li>
+            <router-link
               to="/categories"
               :class="[
                 'menu-item group',
@@ -123,7 +148,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { HorizontalDots, ListIcon, SettingsIcon } from '../../icons'
+import { BoxIcon, HorizontalDots, ListIcon, SettingsIcon } from '../../icons'
 import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()

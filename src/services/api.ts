@@ -10,7 +10,7 @@ export const apiFetch = async <T>(path: string, options: ApiOptions = {}): Promi
   const headers = new Headers(options.headers || {})
   headers.set('Accept', 'application/json')
 
-  if (options.body && !headers.has('Content-Type')) {
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 

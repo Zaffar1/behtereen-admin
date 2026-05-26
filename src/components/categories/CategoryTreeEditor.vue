@@ -1,5 +1,12 @@
 <template>
   <div class="space-y-4">
+    <div
+      v-if="toastMessage"
+      class="fixed right-4 top-4 z-[100000] rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-600 shadow-lg dark:border-error-800 dark:bg-error-950/90"
+    >
+      {{ toastMessage }}
+    </div>
+
     <div v-if="submitError" class="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-950/20">
       {{ submitError }}
     </div>
@@ -42,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ComponentCard from '@/components/common/ComponentCard.vue'
 import CategoryNodeForm from '@/components/categories/CategoryNodeForm.vue'
@@ -74,7 +81,7 @@ interface CategoryField {
 interface CategoryNode {
   id?: number
   name: string
-  image?: string
+  image?: string | File | null
   fields: CategoryField[]
   children: CategoryNode[]
 }
@@ -138,6 +145,8 @@ const formLoading = ref(false)
 const submitError = ref('')
 const successMessage = ref('')
 const errors = ref<Record<string, string>>({})
+const toastMessage = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const inputTypes = ref<InputTypeItem[]>([])
 const inputTypesLoading = ref(false)
@@ -288,7 +297,7 @@ const normalizeNodeForPayload = (node: CategoryNode, depth: number): Record<stri
   return {
     ...(node.id ? { id: node.id } : {}),
     name: node.name.trim(),
-    image: depth === 1 ? node.image?.trim() || undefined : undefined,
+    image: depth === 1 && typeof node.image === 'string' ? node.image.trim() || undefined : undefined,
     fields: mappedFields,
     children: node.children.map((child) => normalizeNodeForPayload(child, depth + 1)),
   }
@@ -341,6 +350,38 @@ const mapApiErrors = (err: Error & { payload?: { errors?: Record<string, string[
   })
 
   return mapped
+}
+
+const showToast = (message: string) => {
+  toastMessage.value = message
+
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
+
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+  }, 3000)
+}
+
+const focusFirstErrorField = async (nextErrors: Record<string, string>) => {
+  const firstKey = Object.keys(nextErrors)[0]
+  if (!firstKey) {
+    return
+  }
+
+  await nextTick()
+
+  const safeKey = firstKey.replace(/"/g, '\\"')
+  const target = document.querySelector(`[data-error-key="${safeKey}"]`) as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (typeof (target as HTMLInputElement).focus === 'function') {
+    ;(target as HTMLInputElement).focus()
+  }
 }
 
 const fetchInputTypes = async () => {
@@ -420,6 +461,8 @@ const submitForm = async () => {
 
   if (Object.keys(nextErrors).length > 0) {
     errors.value = nextErrors
+    showToast('Please fix the highlighted fields before submitting.')
+    await focusFirstErrorField(nextErrors)
     return
   }
 
@@ -435,9 +478,34 @@ const submitForm = async () => {
 
     const method = props.mode === 'create' ? 'POST' : 'PUT'
 
+    const imageFile = form.value.image
+    const hasImageFile = imageFile instanceof File
+
+    let body: BodyInit
+    let requestMethod = method
+
+    if (props.mode === 'create' || (props.mode === 'edit' && hasImageFile)) {
+      const formData = new FormData()
+      formData.append('payload', JSON.stringify(payload))
+
+      if (hasImageFile) {
+        formData.append('image', imageFile)
+      }
+
+      // PHP/Laravel reliably parses multipart on POST; override to PUT for updates.
+      if (props.mode === 'edit') {
+        formData.append('_method', 'PUT')
+        requestMethod = 'POST'
+      }
+
+      body = formData
+    } else {
+      body = JSON.stringify(payload)
+    }
+
     const response = await apiFetch<{ message: string }>(path, {
-      method,
-      body: JSON.stringify(payload),
+      method: requestMethod,
+      body,
     })
 
     successMessage.value = response.message || (props.mode === 'create' ? 'Category created successfully.' : 'Category updated successfully.')
