@@ -15,6 +15,9 @@
       <div v-if="error" class="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-950/20">
         {{ error }}
       </div>
+      <div v-if="success" class="rounded-lg border border-success-200 bg-success-50 px-4 py-3 text-sm text-success-600 dark:border-success-800 dark:bg-success-950/20">
+        {{ success }}
+      </div>
 
       <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400">Loading ad details...</div>
 
@@ -24,12 +27,17 @@
             <div><p class="text-xs text-gray-500">Title</p><p class="text-sm text-gray-900 dark:text-white">{{ ad.title || '-' }}</p></div>
             <div><p class="text-xs text-gray-500">Price</p><p class="text-sm text-gray-900 dark:text-white">{{ formatPrice(ad.price) }}</p></div>
             <div><p class="text-xs text-gray-500">Location</p><p class="text-sm text-gray-900 dark:text-white">{{ ad.location || '-' }}</p></div>
-            <div><p class="text-xs text-gray-500">Status</p><p class="text-sm text-gray-900 dark:text-white">{{ ad.status || '-' }}</p></div>
+            <div><p class="text-xs text-gray-500">Status</p><Badge :color="statusBadgeColor(ad.status)" size="sm">{{ ad.status || '-' }}</Badge></div>
             <div><p class="text-xs text-gray-500">Created At</p><p class="text-sm text-gray-900 dark:text-white">{{ formatDate(ad.created_at) }}</p></div>
             <div><p class="text-xs text-gray-500">Updated At</p><p class="text-sm text-gray-900 dark:text-white">{{ formatDate(ad.updated_at) }}</p></div>
             <div class="md:col-span-2"><p class="text-xs text-gray-500">Description</p><p class="text-sm text-gray-900 dark:text-white">{{ ad.description || '-' }}</p></div>
           </div>
         </ComponentCard>
+
+        <div v-if="ad.status === 'Pending'" class="flex items-center gap-2">
+          <button type="button" :disabled="processing" class="inline-flex items-center gap-2 rounded-md bg-success-500 px-3 py-2 text-sm font-medium text-white hover:bg-success-600 disabled:cursor-not-allowed disabled:opacity-50" @click="updateStatus('Approved')"><Check :size="16" /> Approve</button>
+          <button type="button" :disabled="processing" class="inline-flex items-center gap-2 rounded-md bg-error-500 px-3 py-2 text-sm font-medium text-white hover:bg-error-600 disabled:cursor-not-allowed disabled:opacity-50" @click="updateStatus('Rejected')"><X :size="16" /> Reject</button>
+        </div>
 
         <ComponentCard title="User Info">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -63,7 +71,9 @@ import { useRoute } from 'vue-router'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/common/ComponentCard.vue'
+import Badge from '@/components/ui/Badge.vue'
 import { apiFetch } from '@/services/api'
+import { Check, X } from 'lucide-vue-next'
 
 interface AdDetail {
   id: number
@@ -89,7 +99,9 @@ interface AdViewResponse {
 const route = useRoute()
 const loading = ref(false)
 const error = ref('')
+const success = ref('')
 const ad = ref<AdDetail | null>(null)
+const processing = ref(false)
 
 const fetchAd = async () => {
   const adId = String(route.params.id || '')
@@ -138,6 +150,42 @@ const formatPrice = (price: number | null) => {
   }
 
   return Number(price).toLocaleString()
+}
+
+const statusBadgeColor = (status: string) => {
+  if (status === 'Approved') {
+    return 'success'
+  }
+
+  if (status === 'Rejected') {
+    return 'error'
+  }
+
+  return 'warning'
+}
+
+const updateStatus = async (status: 'Approved' | 'Rejected') => {
+  if (!ad.value || !window.confirm(`${status} "${ad.value.title}"?`)) {
+    return
+  }
+
+  processing.value = true
+  error.value = ''
+  success.value = ''
+
+  try {
+    await apiFetch(`/api/admin/ads/${ad.value.id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+    ad.value.status = status
+    success.value = `Ad ${status.toLowerCase()} successfully.`
+  } catch (err) {
+    const errorObj = err as Error & { payload?: { message?: string } }
+    error.value = errorObj?.payload?.message || errorObj.message || 'Failed to update ad status.'
+  } finally {
+    processing.value = false
+  }
 }
 
 watch(() => route.params.id, fetchAd)
