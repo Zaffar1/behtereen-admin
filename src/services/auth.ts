@@ -14,11 +14,31 @@ const GOOGLE_START_PATH =
     '',
   ) || '/api/admin/auth/google/redirect'
 
+// Edited because of frontend url issue
+
+// export const getGoogleRedirectUrl = async () => {
+//   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+//   const separator = GOOGLE_START_PATH.includes('?') ? '&' : '?'
+//   const pathWithOrigin = currentOrigin
+//     ? `${GOOGLE_START_PATH}${separator}frontend_url=${encodeURIComponent(currentOrigin)}`
+//     : GOOGLE_START_PATH
+
+//   const data = await apiFetch<{ url: string }>(pathWithOrigin, {
+//     method: 'GET',
+//     skipAuthRedirect: true,
+//   })
+
+//   return data.url
+// }
+
+
 export const getGoogleRedirectUrl = async () => {
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  const frontendUrl = import.meta.env.VITE_ADMIN_APP_URL
+
   const separator = GOOGLE_START_PATH.includes('?') ? '&' : '?'
-  const pathWithOrigin = currentOrigin
-    ? `${GOOGLE_START_PATH}${separator}frontend_url=${encodeURIComponent(currentOrigin)}`
+
+  const pathWithOrigin = frontendUrl
+    ? `${GOOGLE_START_PATH}${separator}frontend_url=${encodeURIComponent(frontendUrl)}`
     : GOOGLE_START_PATH
 
   const data = await apiFetch<{ url: string }>(pathWithOrigin, {
@@ -28,6 +48,7 @@ export const getGoogleRedirectUrl = async () => {
 
   return data.url
 }
+
 
 export const completeGoogleCallback = async (loginCode: string) => {
   const data = await apiFetch<CallbackResponse>('/api/admin/auth/google/exchange', {
