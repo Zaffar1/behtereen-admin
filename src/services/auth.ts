@@ -15,7 +15,13 @@ const GOOGLE_START_PATH =
   ) || '/api/admin/auth/google/redirect'
 
 export const getGoogleRedirectUrl = async () => {
-  const data = await apiFetch<{ url: string }>(GOOGLE_START_PATH, {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  const separator = GOOGLE_START_PATH.includes('?') ? '&' : '?'
+  const pathWithOrigin = currentOrigin
+    ? `${GOOGLE_START_PATH}${separator}frontend_url=${encodeURIComponent(currentOrigin)}`
+    : GOOGLE_START_PATH
+
+  const data = await apiFetch<{ url: string }>(pathWithOrigin, {
     method: 'GET',
     skipAuthRedirect: true,
   })
